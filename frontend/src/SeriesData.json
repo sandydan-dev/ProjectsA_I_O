@@ -1,0 +1,64 @@
+
+
+[
+  {
+    "id": "m001",
+    "title": "Shadow Protocol",
+    "genre": ["Action", "Thriller"],
+    "rating": 7.8,
+    "releaseYear": 2022,
+    "duration": "2h 10m",
+    "language": "English",
+    "available": true,
+    "description": "A rogue agent must uncover a global conspiracy while being hunted by his own agency.",
+    "poster": "../public/images/b1.jpg"
+  },
+  {
+    "id": "m002",
+    "title": "The Last Ember",
+    "genre": ["Fantasy", "Adventure"],
+    "rating": 6.9,
+    "releaseYear": 2020,
+    "duration": "1h 55m",
+    "language": "Hindi",
+    "available": false,
+    "description": "In a world where fire is forbidden, a young girl discovers she holds the power to reignite hope.",
+    "poster": "../public/images/b2.jpg"
+  },
+  {
+    "id": "m003",
+    "title": "Codebreaker",
+    "genre": ["Tech", "Documentary"],
+    "rating": 8.1,
+    "releaseYear": 2023,
+    "duration": "1h 30m",
+    "language": "English",
+    "available": true,
+    "description": "An inside look at the pioneers of cybersecurity and the ethical dilemmas they face.",
+    "poster": "../public/images/b3.jpg"
+  },
+  {
+    "id": "m004",
+    "title": "Midnight Sonata",
+    "genre": ["Romance", "Drama"],
+    "rating": 7.5,
+    "releaseYear": 2021,
+    "duration": "2h 5m",
+    "language": "French",
+    "available": true,
+    "description": "Two musicians find love and heartbreak in the quiet corners of Paris.",
+    "poster": "../public/images/b4.jpg"
+  },
+  {
+    "id": "m005",
+    "title": "Neon Drift",
+    "genre": ["Sci-Fi", "Action"],
+    "rating": 7.9,
+    "releaseYear": 2024,
+    "duration": "2h 20m",
+    "language": "English",
+    "available": true,
+    "description": "In a cyberpunk future, a street racer uncovers a secret that could change the fate of the city.",
+    "poster": "../public/images/b5.jpg"
+  }
+]
