@@ -1,11 +1,16 @@
 const { UserModel } = require("../../model");
 const bcrypt = require("bcrypt");
-
+const sendEmail = require("../../utils/mailer");
 const { generateToken } = require("../../middleware/handleToken.token");
+require("dotenv").config();
+const crypto = require("crypto");
+
+const privilegedRoles = ["admin", "superadmin", "manager"];
 
 const userRegister = async (req, res) => {
   try {
     const { name, email, mobile, password, role } = req.body;
+
     console.log("BODY:", req.body);
     console.log("FILE:", req.file);
 
@@ -16,10 +21,13 @@ const userRegister = async (req, res) => {
     }
 
     const profilePhoto = req.file ? req.file.path : null;
+    // 1) Generate verification token + expiry (RAW token stored for simplicity)
+    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
+    const emailVerificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
 
     // Check for existing user
-    const existingUser = await UserModel.findOne({ where: { email } });
-    if (existingUser) {
+    const user = await UserModel.findOne({ where: { email } });
+    if (user) {
       return res
         .status(409)
         .json({ status: false, message: "Email already registered." });
@@ -43,7 +51,7 @@ const userRegister = async (req, res) => {
     }
 
     // Create user
-    const user = await UserModel.create({
+    const newUser = await UserModel.create({
       name,
       email,
       mobile,
@@ -52,24 +60,53 @@ const userRegister = async (req, res) => {
       role: role || "regular", // fallback to employee if not provided
       privilegedId, // will be null for other roles
       createdBy: createdByData || { id: 0, name: "Self" }, // self-registration
+      emailVerificationToken,
+      emailVerificationExpires,
     });
 
-    if (!user) {
-      return res
-        .status(400)
-        .json({ status: false, message: "User creation failed" });
-    }
+    // if (!newUser) {
+    //   return res
+    //     .status(400)
+    //     .json({ status: false, message: "User creation failed" });
+    // }
 
     // If self-registration, update createdBy to self ID/name
     if (!createdByData) {
-      user.createdBy = { id: user.id, name: user.name };
-      await user.save();
+      newUser.createdBy = { id: newUser.id, name: newUser.name };
+      await newUser.save();
     }
 
-    res.status(201).json({
+    // 6) Build verification URL and send email
+    const base = (process.env.BASE_URL || "http://localhost:3000").replace(
+      /\/+$/,
+      ""
+    );
+    const verificationUrl = `${base}/api/user/verify-email?token=${emailVerificationToken}`;
+
+    await sendEmail({
+      to: email,
+      subject: "Verify your email",
+      text: `Hi ${name}, please verify your email using the link: ${verificationUrl}`,
+      html: `
+        <p>Hi ${name},</p>
+        <p>Click the link below to verify your email:</p>
+        <a href="${verificationUrl}" style="padding:10px 20px; background:#007bff; color:#fff; text-decoration:none; border-radius:5px;">
+          Verify Email
+        </a>
+        <p>This link will expire in 15 minutes.</p>
+      `,
+    });
+
+    return res.status(201).json({
       status: true,
-      message: "User registered successfully",
-      data: user,
+      message: "User registered successfully. Please verify your email.",
+      data: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        isEmailVerified: newUser.isEmailVerified,
+      },
     });
   } catch (error) {
     console.error("Registration error:", error);
@@ -90,7 +127,80 @@ const userRegister = async (req, res) => {
   }
 };
 
-const privilegedRoles = ["admin", "superadmin", "manager"];
+// verify email
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Veification token missing." });
+    }
+
+    // Look up by the same token we stored
+    const user = await UserModel.findOne({
+      where: { emailVerificationToken: token },
+    });
+
+    // if token expired or invalid
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "Invalild or expired token",
+      });
+    }
+
+    // if email verified already
+    if (user.isEmailVerified) {
+      return res.status(200).json({
+        status: true,
+        message: "Email already verified.",
+      });
+    }
+
+    // verification token expired
+    if (
+      user.emailVerificationExpires &&
+      user.emailVerificationExpires < new Date()
+    ) {
+      return res.status(410).json({
+        status: false,
+        message: "Verification token has expired",
+      });
+    }
+
+    // mark email for verified
+    user.isEmailVerified = true;
+    user.emailVerifiedAt = new Date();
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+
+    await user.save();
+
+    return res.status(200).json({
+      status: true,
+      message: "Email Verified Successfully",
+      verifiedAt: user.emailVerifiedAt,
+    });
+  } catch (error) {
+    console.error("Email verification error:", error);
+    if (
+      error.name === "SequelizeValidationError" ||
+      error.name === "SequelizeDatabaseError"
+    ) {
+      return res.status(400).json({
+        status: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error during email verification",
+    });
+  }
+};
 
 const loginUser = async (req, res) => {
   try {
@@ -105,6 +215,14 @@ const loginUser = async (req, res) => {
       return res.status(404).json({
         status: false,
         message: "User not found, please register first",
+      });
+    }
+
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        status: false,
+        message: "Please verify your email before logging in.",
       });
     }
 
@@ -125,14 +243,6 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // Generate token
-    // const token = generateToken({
-    //   userId: user.id,
-    //   role: user.role,
-    //   email: user.email,
-    //   privilegedId: user.privilegedId,
-    //   createdBy: user.createdBy,
-    // });
     const token = generateToken(user);
 
     // Set token in cookie
@@ -148,7 +258,7 @@ const loginUser = async (req, res) => {
       email: user.email,
       role: user.role,
       privilegedId: user.privilegedId,
-      createdBy : user.createdBy
+      createdBy: user.createdBy,
     };
 
     // if privilegedId for main roles otherwise normal user login directly
@@ -424,6 +534,7 @@ const updateUser = async (req, res) => {
 
 module.exports = {
   userRegister,
+  verifyEmail,
   loginUser,
   logoutUser,
   softDeleteUser,

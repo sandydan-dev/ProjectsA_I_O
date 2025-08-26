@@ -3,7 +3,8 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 3000;
-const path = require('path')
+const path = require("path");
+const checkBanStatus = require("./middleware/checkBanStatus.js");
 
 // routes
 const router = require("./route/index");
@@ -23,7 +24,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // main route
 app.use("/api", router);

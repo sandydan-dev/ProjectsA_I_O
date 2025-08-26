@@ -220,60 +220,11 @@ const UserModel = sequelize.define(
     timestamps: true,
     tableName: "users",
     indexes: [
-      {
-        unique: true,
-        fields: ["email"],
-      },
+      { unique: true, fields: ["email"] },
+      { fields: ["emailVerificationToken"] },
     ],
   }
 );
-
-// 🔄 Hook: Before creating a new user
-UserModel.beforeCreate((user, options) => {
-  console.log("[HOOK] beforeCreate triggered for user:", user.email);
-
-  // Generate email verification token if not verified
-  if (!user.isEmailVerified) {
-    user.emailVerificationToken = crypto.randomBytes(32).toString("hex");
-    user.emailVerificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
-    console.log(
-      "[HOOK] Email verification token generated:",
-      user.emailVerificationToken
-    );
-  }
-
-  // Generate email change token if requested
-  if (user.emailChangeRequested) {
-    user.emailChangeToken = crypto.randomBytes(32).toString("hex");
-    user.emailChangeExpires = new Date(Date.now() + 15 * 60 * 1000);
-    console.log("[HOOK] Email change token generated:", user.emailChangeToken);
-  }
-});
-
-// 🔄 Hook: Before updating an existing user
-UserModel.beforeUpdate((user, options) => {
-  console.log("[HOOK] beforeUpdate triggered for user:", user.email);
-
-  // Regenerate email verification token if email is unverified
-  if (!user.isEmailVerified && !user.emailVerificationToken) {
-    user.emailVerificationToken = crypto.randomBytes(32).toString("hex");
-    user.emailVerificationExpires = new Date(Date.now() + 15 * 60 * 1000);
-    console.log(
-      "[HOOK] Email verification token regenerated:",
-      user.emailVerificationToken
-    );
-  }
-
-  // Regenerate email change token if new email is requested
-  if (user.emailChangeRequested && !user.emailChangeToken) {
-    user.emailChangeToken = crypto.randomBytes(32).toString("hex");
-    user.emailChangeExpires = new Date(Date.now() + 15 * 60 * 1000);
-    console.log(
-      "[HOOK] Email change token regenerated:",
-      user.emailChangeToken
-    );
-  }
-});
 
 // Associations / Relationship : UserModel
 UserModel.associate = (models) => {

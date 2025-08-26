@@ -27,11 +27,12 @@ const sendEmail = async ({ to, subject, text, html }) => {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email Sent: ", info.messageId, info.NODE_MAILER_EMAIL_USER);
+    console.log("Email Sent: ", info.messageId);
+    console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
     return info;
   } catch (error) {
-    console.error("Email error:", err);
-    throw err;
+    console.error("Email error:", error);
+    throw error;
   }
 };
 

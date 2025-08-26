@@ -20,6 +20,9 @@ userRouter.post(
 // Public registration for employees
 userRouter.post("/register", uploadSingle, userController.userRegister);
 
+// email verification
+userRouter.get('/verify-email', userController.verifyEmail)
+
 // user login route
 userRouter.post("/login", userController.loginUser);
 
