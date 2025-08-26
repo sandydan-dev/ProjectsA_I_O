@@ -35,11 +35,14 @@ const UserModel = sequelize.define(
       type: DataTypes.ENUM(
         "admin",
         "superadmin",
-        "staff",
         "employee",
         "manager",
         "student",
-        "regular"
+        "regular",
+        "staff",
+        "librarian",
+        "members",
+        "assistant"
       ),
       defaultValue: "regular",
     },
