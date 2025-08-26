@@ -37,7 +37,7 @@ const BookInventory = sequelize.define(
     requiresPermission: { type: DataTypes.BOOLEAN, defaultValue: false },
     permissionType: { type: DataTypes.ENUM("signature", "token") },
   },
-  { timestamps: true }
+  { timestamps: true, tableName : "book_inventories" }
 );
 
 BookInventory.associate = (models) => {
