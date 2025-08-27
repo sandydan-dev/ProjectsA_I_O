@@ -21,34 +21,45 @@ const LibraryBranch = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-
+    description: {
+      type: DataTypes.TEXT, // Short summary for UI display
+      allowNull: true,
+    },
     address: {
       type: DataTypes.TEXT,
+      allowNull: true,
     },
 
     city: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
 
     state: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
 
     country: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
     postalCode: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
     contactNumber: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
 
     email: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
     openingHours: {
-      type: DataTypes.JSON, // flexible for storing schedules
+      type: DataTypes.JSON,
+      allowNull: true, // flexible for storing schedules
     },
     status: {
       type: DataTypes.ENUM("active", "inactive", "archived"),
@@ -65,13 +76,17 @@ const LibraryBranch = sequelize.define(
       type: DataTypes.ENUM("manual", "digital", "hybrid"),
       defaultValue: "digital", // because you're using an app to manage it
     },
+    logoUrl: {
+      type: DataTypes.STRING, // Branch logo or image
+      allowNull: true,
+    },
 
     createdBy: {
       type: DataTypes.INTEGER,
       references: { model: "users", key: "id" }, // FK → User (Admin/SuperAdmin)
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
-      allowNull: false,
+      allowNull: true,
     },
     updatedBy: {
       type: DataTypes.INTEGER,
@@ -105,7 +120,6 @@ LibraryBranch.associate = (models) => {
   LibraryBranch.belongsTo(models.User, {
     foreignKey: "createdBy",
   });
-  LibraryBranch.belongsTo(models.User, { foreignKey: "createdBy" });
 };
 
 module.exports = LibraryBranch;

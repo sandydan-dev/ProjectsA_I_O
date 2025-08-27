@@ -117,11 +117,12 @@ userRouter.patch(
   authorizeRoles(
     "admin",
     "superadmin",
-    "manager",
+    "librarian",
     "staff",
     "employee",
     "regular",
-    "student"
+    "student",
+    "assistant"
   ),
   uploadSingle,
   userController.updateUser

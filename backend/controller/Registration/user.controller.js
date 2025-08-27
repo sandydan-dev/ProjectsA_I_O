@@ -85,7 +85,7 @@ const userRegister = async (req, res) => {
 
     await sendEmail({
       to: email,
-      subject: "Verify your email",
+      subject: `📩 ${name} ➡ Verify your email`,
       text: `Hi ${name}, please verify your email using the link: ${verificationUrl}`,
       html: `
         <p>Hi ${name},</p>
