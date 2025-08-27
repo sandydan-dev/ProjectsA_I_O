@@ -50,6 +50,21 @@ const LibraryBranch = sequelize.define(
     openingHours: {
       type: DataTypes.JSON, // flexible for storing schedules
     },
+    status: {
+      type: DataTypes.ENUM("active", "inactive", "archived"),
+      defaultValue: "active",
+    },
+    // what kind of branch physical or digital
+    branchType: {
+      type: DataTypes.ENUM("physical", "digital", "mobile"),
+      defaultValue: "physical",
+    },
+
+    // manage by application, so it is digital
+    managementMode: {
+      type: DataTypes.ENUM("manual", "digital", "hybrid"),
+      defaultValue: "digital", // because you're using an app to manage it
+    },
 
     createdBy: {
       type: DataTypes.INTEGER,
@@ -57,6 +72,11 @@ const LibraryBranch = sequelize.define(
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
       allowNull: false,
+    },
+    updatedBy: {
+      type: DataTypes.INTEGER,
+      references: { model: "users", key: "id" },
+      allowNull: true,
     },
   },
   {
@@ -80,6 +100,10 @@ LibraryBranch.associate = (models) => {
   // branch has many inventories
   LibraryBranch.hasMany(models.BookInventory, {
     foreignKey: "branchId",
+  });
+
+  LibraryBranch.belongsTo(models.User, {
+    foreignKey: "createdBy",
   });
   LibraryBranch.belongsTo(models.User, { foreignKey: "createdBy" });
 };
