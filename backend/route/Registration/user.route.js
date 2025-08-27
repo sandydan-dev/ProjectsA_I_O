@@ -21,7 +21,7 @@ userRouter.post(
 userRouter.post("/register", uploadSingle, userController.userRegister);
 
 // email verification
-userRouter.get('/verify-email', userController.verifyEmail)
+userRouter.get("/verify-email", userController.verifyEmail);
 
 // user login route
 userRouter.post("/login", userController.loginUser);
@@ -33,7 +33,15 @@ userRouter.get("/logout", userController.logoutUser);
 userRouter.patch(
   "/soft-delete/:id",
   verifyToken,
-  authorizeRoles("admin", "superadmin", "manager", "staff", "employee", "regular", "student"),
+  authorizeRoles(
+    "admin",
+    "superadmin",
+    "manager",
+    "staff",
+    "employee",
+    "regular",
+    "student"
+  ),
   userController.softDeleteUser
 );
 
@@ -41,7 +49,15 @@ userRouter.patch(
 userRouter.delete(
   "/hard-delete/:id",
   verifyToken,
-  authorizeRoles("admin", "superadmin", "manager", "staff", "employee", "regular", "student"),
+  authorizeRoles(
+    "admin",
+    "superadmin",
+    "manager",
+    "staff",
+    "employee",
+    "regular",
+    "student"
+  ),
   userController.hardDeleteUser
 );
 
@@ -49,7 +65,15 @@ userRouter.delete(
 userRouter.get(
   "/active-users",
   verifyToken,
-  authorizeRoles("admin", "superadmin", "manager", "staff", "employee", "regular", "student"),
+  authorizeRoles(
+    "admin",
+    "superadmin",
+    "manager",
+    "staff",
+    "employee",
+    "regular",
+    "student"
+  ),
   userController.getAllActiveUsers
 );
 
@@ -57,7 +81,15 @@ userRouter.get(
 userRouter.get(
   "/inactive-users",
   verifyToken,
-  authorizeRoles("admin", "superadmin", "manager", "staff", "employee", "regular", "student"),
+  authorizeRoles(
+    "admin",
+    "superadmin",
+    "manager",
+    "staff",
+    "employee",
+    "regular",
+    "student"
+  ),
   userController.getInActiveUsers
 );
 
@@ -65,7 +97,15 @@ userRouter.get(
 userRouter.patch(
   "/make-active/:id",
   verifyToken,
-  authorizeRoles("admin", "superadmin", "manager", "staff", "employee", "regular", "student"),
+  authorizeRoles(
+    "admin",
+    "superadmin",
+    "manager",
+    "staff",
+    "employee",
+    "regular",
+    "student"
+  ),
 
   userController.makeActiveUser
 );
@@ -74,9 +114,46 @@ userRouter.patch(
 userRouter.patch(
   "/update/:id",
   verifyToken,
-  authorizeRoles("admin", "superadmin", "manager", "staff", "employee", "regular", "student"),
+  authorizeRoles(
+    "admin",
+    "superadmin",
+    "manager",
+    "staff",
+    "employee",
+    "regular",
+    "student"
+  ),
   uploadSingle,
   userController.updateUser
+);
+
+// banned user by only admin/superadmin
+userRouter.put(
+  "/ban/:userId",
+  verifyToken,
+  authorizeRoles("admin", "superadmin"),
+  userController.banUser
+);
+
+userRouter.put(
+  "/unban/:userId",
+  verifyToken,
+  authorizeRoles("admin", "superadmin"),
+  userController.banUser
+);
+// suspend user
+userRouter.put(
+  "/suspend/:userId",
+  verifyToken,
+  authorizeRoles("admin", "superadmin"),
+  userController.suspendUser
+);
+
+userRouter.put(
+  "/unsuspend/:userId",
+  verifyToken,
+  authorizeRoles("admin", "superadmin"),
+  userController.unsuspendUser
 );
 
 module.exports = userRouter;

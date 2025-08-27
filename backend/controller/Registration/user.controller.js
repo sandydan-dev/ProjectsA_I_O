@@ -485,10 +485,73 @@ const makeActiveUser = async (req, res) => {
 };
 
 // update user registration data
+// const updateUser = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { name, email, mobile, password } = req.body;
+//     const user = await UserModel.findOne({
+//       where: { id, isDeleted: false },
+//     });
+
+//     if (!user) {
+//       return res.status(404).json({
+//         status: false,
+//         message: "Active user not found or is deleted",
+//       });
+//     }
+
+//     // update fields
+//     if (name) user.name = name;
+//     if (email) user.email = email;
+//     if (mobile) user.mobile = mobile;
+
+//     if (password) {
+//       const hashedPassword = await bcrypt.hash(password, 10);
+//       user.password = hashedPassword;
+//     }
+
+//     if (req.file) {
+//       user.profilePhoto = req.file.path;
+//     }
+
+//     await user.save();
+
+//     console.log("User updated", user);
+
+//     return res.status(201).json({
+//       status: true,
+//       message: "user update successfully",
+//       data: user,
+//     });
+//   } catch (error) {
+//     console.error("Update error:", error.message);
+//     return res.status(500).json({
+//       status: false,
+//       message: "Internal server error",
+//     });
+//   }
+// };
 const updateUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, email, mobile, password } = req.body;
+    const { id } = req.params; // user to update
+    const {
+      name,
+      email,
+      mobile,
+      password,
+      isBanned,
+      banReason,
+      isSuspended,
+      suspendReason,
+      suspendExpiresAt,
+    } = req.body;
+
+    console.log("UPDATE USER REQUEST:", {
+      id,
+      body: req.body,
+      actor: req.user,
+    });
+
     const user = await UserModel.findOne({
       where: { id, isDeleted: false },
     });
@@ -500,7 +563,38 @@ const updateUser = async (req, res) => {
       });
     }
 
-    // update fields
+    const actorRole = req.user?.role;
+    const actorId = req.user?.id;
+
+    // ----- Role and Permission Checks -----
+
+    // 1. If actor is a normal user and trying to update someone else
+    if (
+      actorRole !== "admin" &&
+      actorRole !== "superadmin" &&
+      actorId !== user.id
+    ) {
+      return res.status(403).json({
+        status: false,
+        message: "You are not authorized to update this user",
+      });
+    }
+
+    // 2. If actor is the same user but is banned/suspended
+    if (
+      actorId === user.id &&
+      (user.isBanned === true || user.isSuspended === true)
+    ) {
+      return res.status(403).json({
+        status: false,
+        message:
+          "Your account is banned or suspended. Updates are not allowed.",
+      });
+    }
+
+    // ----- Allowed Updates -----
+
+    // Basic fields (self-update or admin update)
     if (name) user.name = name;
     if (email) user.email = email;
     if (mobile) user.mobile = mobile;
@@ -514,20 +608,250 @@ const updateUser = async (req, res) => {
       user.profilePhoto = req.file.path;
     }
 
+    // ----- Admin / Superadmin Special Fields -----
+    if (actorRole === "admin" || actorRole === "superadmin") {
+      if (typeof isBanned === "boolean") {
+        user.isBanned = isBanned;
+        user.banReason = isBanned ? banReason || "No reason provided" : null;
+        user.bannedBy = isBanned
+          ? { id: actorId, name: req.user.name || "Unknown" }
+          : null;
+        user.banDate = isBanned ? new Date() : null;
+      }
+
+      if (typeof isSuspended === "boolean") {
+        user.isSuspended = isSuspended;
+        user.suspendReason = isSuspended
+          ? suspendReason || "No reason provided"
+          : null;
+        user.suspendedBy = isSuspended
+          ? { id: actorId, name: req.user.name || "Unknown" }
+          : null;
+        user.suspendedAt = isSuspended ? new Date() : null;
+        user.suspendExpiresAt =
+          isSuspended && suspendExpiresAt ? new Date(suspendExpiresAt) : null;
+      }
+    }
+
     await user.save();
 
-    console.log("User updated", user);
+    console.log("User updated successfully:", user);
 
-    return res.status(201).json({
+    return res.status(200).json({
       status: true,
-      message: "user update successfully",
+      message: "User updated successfully",
       data: user,
     });
   } catch (error) {
-    console.error("Update error:", error.message);
+    console.error("Update error:", error);
     return res.status(500).json({
       status: false,
       message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+//todo: Ban a user
+const banUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { reason } = req.body;
+
+    console.log("BAN USER REQUEST:", { userId, reason, actor: req.user });
+
+    // only banned the user by admin/superadmin
+    if (!["admin", "superadmin"].includes(req.user?.role)) {
+      console.log(`Unauthorized role (${req.user?.role}) tried to ban user`);
+      return res.status(403).json({
+        status: false,
+        message: "Not authorized to ban users",
+      });
+    }
+
+    // find user from model
+    const user = await UserModel.findByPk(userId);
+
+    // if userid is not found
+    if (!user) {
+      console.log(`User id ${userId} not found`);
+      return res.status(404).json({
+        status: false,
+        message: `User not found for this id ${userId}`,
+      });
+    }
+
+    // update ban fields to ban a user
+    user.isBanned = true;
+    user.banReason = reason || `Violation spreading this user`;
+    user.banDate = new Date();
+    user.bannedBy = req.user.id;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Mr. ${req.user?.name} banned this user`,
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error banning user:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error, while banned",
+      error: error.message,
+    });
+  }
+};
+
+const unbanUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log("UNBAN USER REQUEST:", { userId, actor: req.user });
+
+    // only admin/superadmin can handle this things
+    if (!["admin", "superadmin"].includes(req.user?.role)) {
+      console.warn(`Unauthorized role (${req.user?.role}) tried to unban user`);
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized to unban users" });
+    }
+
+    const user = await UserModel.findByPk(userId);
+    if (!user) {
+      console.error(`User ${userId} not found`);
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // Clear ban fields
+    user.isBanned = false;
+    user.banReason = null;
+    user.banDate = null;
+    user.bannedBy = null;
+
+    console.log(`User ${userId} unbanned by ${req.user.id}`);
+    return res.status(200).json({
+      success: true,
+      message: "User unbanned successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error unbanning user:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// Utility to check if actor is allowed (admin/superadmin only)
+const isAuthorized = (req) => ["admin", "superadmin"].includes(req.user?.role);
+
+const suspendUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { reason, expiresAt } = req.body;
+
+    console.log("SUSPEND USER REQUEST:", {
+      userId,
+      reason,
+      expiresAt,
+      actor: req.user,
+    });
+
+    // Check permission
+    if (!isAuthorized(req)) {
+      console.warn(
+        `Unauthorized role (${req.user?.role}) tried to suspend user`
+      );
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized to suspend users" });
+    }
+
+    const user = await UserModel.findByPk(userId);
+    if (!user) {
+      console.error(`User ${userId} not found`);
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // Apply suspension
+    user.isSuspended = true;
+    user.suspendReason = reason || "No reason provided";
+    user.suspendedBy = { id: req.user.id, name: req.user.name || "Unknown" };
+    user.suspendedAt = new Date();
+    user.suspendExpiresAt = expiresAt ? new Date(expiresAt) : null;
+
+    await user.save();
+
+    console.log(`User ${userId} suspended by ${req.user.id}`);
+    return res.status(200).json({
+      success: true,
+      message: `User suspended${
+        expiresAt ? " until " + user.suspendExpiresAt.toISOString() : ""
+      }`,
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error suspending user:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const unsuspendUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    console.log("UNSUSPEND USER REQUEST:", { userId, actor: req.user });
+
+    // Check permission
+    if (!isAuthorized(req)) {
+      console.warn(
+        `Unauthorized role (${req.user?.role}) tried to unsuspend user`
+      );
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized to unsuspend users" });
+    }
+
+    const user = await UserModel.findByPk(userId);
+    if (!user) {
+      console.error(`User ${userId} not found`);
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // Clear suspension
+    user.isSuspended = false;
+    user.suspendReason = null;
+    user.suspendedBy = null;
+    user.suspendedAt = null;
+    user.suspendExpiresAt = null;
+
+    await user.save();
+
+    console.log(`User ${userId} unsuspended by ${req.user.id}`);
+    return res.status(200).json({
+      success: true,
+      message: "User unsuspended successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error unsuspending user:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
     });
   }
 };
@@ -543,4 +867,10 @@ module.exports = {
   getInActiveUsers,
   makeActiveUser,
   updateUser,
+  // banned use
+  banUser,
+  unbanUser,
+  // suspend user
+  suspendUser,
+  unsuspendUser,
 };

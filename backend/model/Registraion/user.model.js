@@ -126,19 +126,6 @@ const UserModel = sequelize.define(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
-    //* unsubscribe or blocked
-    // Optional. Use it to block sending emails to users who unsubscribed or bounced. Not needed for practice.
-    // emailSuppressed: {
-    //   //✅
-    //   type: DataTypes.BOOLEAN,
-    //   defaultValue: false,
-    // },
-    // Optional but useful. Lets users choose what types of emails they want (e.g. newsletter, alerts). Great for simulating real-world email settings.
-    // emailPreferences: {
-    //   type: DataTypes.JSON,
-    //   allowNull: true,
-    //   defaultValue: null, // or leave out defaultValue entirely
-    // },
 
     //todo: 🚫 Ban Management
     isBanned: {
