@@ -9,12 +9,18 @@ const Category = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
-    name: {
+     name: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
+      validate: {
+        notEmpty: true,
+        len: [2, 100], // optional: enforce reasonable length
+      },
     },
     description: {
       type: DataTypes.TEXT,
+      allowNull: true,
     },
   },
   {

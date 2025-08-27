@@ -32,6 +32,13 @@ const Librarian = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isEmail: true,
+      },
+    },
     age: {
       type: DataTypes.INTEGER,
     },
@@ -70,7 +77,7 @@ Librarian.associate = (models) => {
   // Link librarian to assigned branch
   Librarian.belongsTo(models.LibraryBranch, { foreignKey: "branchId" });
 
-  // librarian belongs to user
+  // Track who assigned this librarian
   Librarian.belongsTo(models.User, {
     foreignKey: "userId",
   });
@@ -81,13 +88,14 @@ Librarian.associate = (models) => {
   });
 
   // Reverse associations
-  models.User.hasOne(Librarian, { foreignKey: "userId" });
-  models.User.hasMany(Librarian, {
+  models.User.hasOne(models.Librarian, { foreignKey: "userId" });
+
+  models.User.hasMany(models.Librarian, {
     foreignKey: "createdBy",
     as: "AssignedLibrarians",
   });
 
-  models.LibraryBranch.hasMany(Librarian, { foreignKey: "branchId" });
+  models.LibraryBranch.hasMany(models.Librarian, { foreignKey: "branchId" });
 };
 
 module.exports = Librarian;

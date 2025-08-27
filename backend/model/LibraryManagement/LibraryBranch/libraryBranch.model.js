@@ -70,22 +70,16 @@ LibraryBranch.associate = (models) => {
   // branch has many librarian
   LibraryBranch.hasMany(models.Librarian, {
     foreignKey: "branchId",
-    // onDelete: "CASCADE",
-    // onUpdate: "CASCADE",
   });
 
   // branch has many shelf
   LibraryBranch.hasMany(models.Shelf, {
     foreignKey: "branchId",
-    // onDelete: "CASCADE",
-    // onUpdate: "CASCADE",
   });
 
   // branch has many inventories
   LibraryBranch.hasMany(models.BookInventory, {
     foreignKey: "branchId",
-    // onDelete: "CASCADE",
-    // onUpdate: "CASCADE",
   });
   LibraryBranch.belongsTo(models.User, { foreignKey: "createdBy" });
 };

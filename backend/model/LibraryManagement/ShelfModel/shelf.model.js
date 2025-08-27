@@ -12,28 +12,43 @@ const Shelf = sequelize.define(
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     },
-    floor: { type: DataTypes.STRING },
-    section: { type: DataTypes.STRING },
-    row: { type: DataTypes.STRING },
-    shelf: { type: DataTypes.STRING },
+    floor: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    section: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    row: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    shelfLabel: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,
-    tableName: "shelfs",
+    tableName: "shelves",
   }
 );
 
 // Association/Relationship
 
 Shelf.associate = (models) => {
-  // shelf belongs to branch
+  // Shelf belongs to a LibraryBranch
   Shelf.belongsTo(models.LibraryBranch, {
     foreignKey: "branchId",
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
   });
 
-  models.LibraryBranch.hasMany(Shelf, { foreignKey: "branchId" });
+  models.LibraryBranch.hasMany(models.Shelf, { foreignKey: "branchId" });
 
   // shelf has many book inventory
   Shelf.hasMany(models.BookInventory, {
