@@ -102,6 +102,12 @@ const LibraryBranch = sequelize.define(
 
 // Associations
 LibraryBranch.associate = (models) => {
+
+  // library has many librarian uer
+  LibraryBranch.belongsTo(models.User, {
+    foreignKey: "createdBy",
+  });
+
   // branch has many librarian
   LibraryBranch.hasMany(models.Librarian, {
     foreignKey: "branchId",
@@ -117,9 +123,6 @@ LibraryBranch.associate = (models) => {
     foreignKey: "branchId",
   });
 
-  LibraryBranch.belongsTo(models.User, {
-    foreignKey: "createdBy",
-  });
 };
 
 module.exports = LibraryBranch;

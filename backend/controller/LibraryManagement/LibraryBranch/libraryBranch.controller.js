@@ -92,6 +92,205 @@ const createBranch = async (req, res) => {
   }
 };
 
+// get all library branchese
+const getAllBranches = async (req, res) => {
+  try {
+    const userRole = req.user?.role || "regular"; // fallback if unauthenticated
+    // Define public fields
+    const publicFields = [
+      "description",
+      "address",
+      "city",
+      "state",
+      "country",
+      "postalCode",
+      "contactNumber",
+      "email",
+      "status",
+      "branchType",
+      "managementMode",
+      "openingHours",
+      "name",
+      "branchCode",
+      "logoUrl",
+    ];
+
+    // Define full fields for privileged roles
+    const fullFields = [
+      "id",
+      "description",
+      "address",
+      "city",
+      "state",
+      "country",
+      "postalCode",
+      "contactNumber",
+      "email",
+      "status",
+      "branchType",
+      "managementMode",
+      "openingHours",
+      "name",
+      "branchCode",
+      "logoUrl",
+      "createdBy",
+      "updatedBy",
+      "createdAt",
+      "updatedAt",
+    ];
+
+    // only main roles can see all details
+    const isPrivileged = ["admin", "superadmin", "librarian"].includes(
+      userRole
+    );
+
+    // SEE FIELDS FOR MAIN ROLE / NORMAL ROLE
+    const branch = await LibraryBranchModel.findAll({
+      attributes: isPrivileged ? fullFields : publicFields,
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (!branch || branch.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "No branch data found" });
+    }
+
+    console.log("All branchese:", branch);
+    return res.status(200).json({ status: true, data: branch });
+  } catch (error) {
+    console.error("Error fetching branches:", {
+      message: error.message,
+      stack: error.stack,
+    });
+    return res.status(500).json({
+      status: false,
+      message: "Error while getting all branch data",
+      error,
+    });
+  }
+};
+
+// update branch
+const updateLibraryBranch = async (req, res) => {
+  try {
+    // only this role can update library details
+    const allowedRoles = ["admin", "superadmin", "librarian"];
+    const userRole = req.user?.role;
+
+    if (!allowedRoles.includes(userRole)) {
+      return res.status(403).json({
+        status: false,
+        message: "You do not have permission to update library branches",
+      });
+    }
+
+    const branchId = req.params.id;
+
+    const {
+      description,
+      address,
+      city,
+      state,
+      country,
+      postalCode,
+      contactNumber,
+      email,
+      status,
+      branchType,
+      managementMode,
+      openingHours,
+      name,
+      branchCode,
+      logoUrl,
+    } = req.body;
+
+    const updatedBy = req.user?.id;
+
+    const branch = await LibraryBranch.findByPk(branchId);
+
+    if (!branch) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Branch not found" });
+    }
+
+    await branch.update({
+      description,
+      address,
+      city,
+      state,
+      country,
+      postalCode,
+      contactNumber,
+      email,
+      status,
+      branchType,
+      managementMode,
+      openingHours,
+      name,
+      branchCode,
+      logoUrl,
+      updatedBy,
+    });
+
+    return res.status(200).json({
+      status: true,
+      message: "Branch updated successfully",
+      data: branch,
+    });
+  } catch (error) {
+    console.error("Error updating branch:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error, while updating",
+      error: error.message,
+    });
+  }
+};
+
+// delete branch
+const deleteLibraryBranch = async (req, res) => {
+  try {
+    const allowedRoles = ["admin", "superadmin", "librarian"];
+    const userRole = req.user?.role;
+
+    if (!allowedRoles.includes(userRole)) {
+      return res.status(403).json({
+        status: false,
+        message: "You do not have permission to delete library branches",
+      });
+    }
+
+    const branchId = req.params.id;
+
+    const branch = await LibraryBranch.findByPk(branchId);
+
+    if (!branch) {
+      return res.status(404).json({
+        status: false,
+        message: "Branch not found",
+      });
+    }
+
+    await branch.destroy();
+    return res.status(200).json({
+      status: true,
+      message: "Branch deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting branch:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error, deleting library",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createBranch,
+  getAllBranches,
+  updateLibraryBranch,
+  deleteLibraryBranch
 };

@@ -20,4 +20,37 @@ branchRouter.post(
   branchController.createBranch
 );
 
+//* API: localhost:3000/api/branch
+branchRouter.get(
+  "/",
+  verifyToken,
+  authorizeRoles(
+    "admin",
+    "superadmin",
+    "librarian",
+    "assistant",
+    "regular",
+    "staff",
+    "manager"
+  ),
+  branchController.getAllBranches
+);
+
+// update branch
+branchRouter.put(
+  "/branche/:id",
+  verifyToken,
+  authorizeRoles("admin", "superadmin", "librarian", "assistant"),
+  uploadSingle,
+  branchController.updateLibraryBranch
+);
+
+// delete branch
+branchRouter.delete(
+  "/branche/:id",
+  verifyToken,
+  authorizeRoles("admin", "superadmin", "librarian", "assistant"),
+  branchController.deleteLibraryBranch
+);
+
 module.exports = branchRouter;
