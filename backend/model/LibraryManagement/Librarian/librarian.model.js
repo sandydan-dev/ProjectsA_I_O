@@ -23,7 +23,7 @@ const Librarian = sequelize.define(
     },
     branchId: {
       type: DataTypes.INTEGER,
-      references: { model: "LibraryBranches", key: "id" }, // FK → LibraryBranch
+      references: { model: "library_branches", key: "id" }, // FK → LibraryBranch
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
       allowNull: true,
@@ -71,31 +71,35 @@ const Librarian = sequelize.define(
 
 // Associations
 Librarian.associate = (models) => {
-  // Link librarian to User account
-  Librarian.belongsTo(models.User, { foreignKey: "userId" });
-
-  // Link librarian to assigned branch
-  Librarian.belongsTo(models.LibraryBranch, { foreignKey: "branchId" });
-
-  // Track who assigned this librarian
-  Librarian.belongsTo(models.User, {
+  // Link to the user account (librarian identity)
+  Librarian.belongsTo(models.UserModel, {
     foreignKey: "userId",
   });
-  // Track which Admin assigned this librarian
-  Librarian.belongsTo(models.User, {
+
+  // Link to the library branch
+  Librarian.belongsTo(models.LibraryBranchModel, {
+    foreignKey: "branchId",
+  });
+
+  // Track which admin assigned this librarian
+  Librarian.belongsTo(models.UserModel, {
     foreignKey: "createdBy",
     as: "AssignedBy",
   });
 
   // Reverse associations
-  models.User.hasOne(models.Librarian, { foreignKey: "userId" });
+  models.UserModel.hasOne(models.LibrarianModel, {
+    foreignKey: "userId",
+  });
 
-  models.User.hasMany(models.Librarian, {
+  models.UserModel.hasMany(models.LibrarianModel, {
     foreignKey: "createdBy",
     as: "AssignedLibrarians",
   });
 
-  models.LibraryBranch.hasMany(models.Librarian, { foreignKey: "branchId" });
+  models.LibraryBranchModel.hasMany(models.LibrarianModel, {
+    foreignKey: "branchId",
+  });
 };
 
 module.exports = Librarian;
