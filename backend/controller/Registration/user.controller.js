@@ -485,52 +485,6 @@ const makeActiveUser = async (req, res) => {
 };
 
 // update user registration data
-// const updateUser = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { name, email, mobile, password } = req.body;
-//     const user = await UserModel.findOne({
-//       where: { id, isDeleted: false },
-//     });
-
-//     if (!user) {
-//       return res.status(404).json({
-//         status: false,
-//         message: "Active user not found or is deleted",
-//       });
-//     }
-
-//     // update fields
-//     if (name) user.name = name;
-//     if (email) user.email = email;
-//     if (mobile) user.mobile = mobile;
-
-//     if (password) {
-//       const hashedPassword = await bcrypt.hash(password, 10);
-//       user.password = hashedPassword;
-//     }
-
-//     if (req.file) {
-//       user.profilePhoto = req.file.path;
-//     }
-
-//     await user.save();
-
-//     console.log("User updated", user);
-
-//     return res.status(201).json({
-//       status: true,
-//       message: "user update successfully",
-//       data: user,
-//     });
-//   } catch (error) {
-//     console.error("Update error:", error.message);
-//     return res.status(500).json({
-//       status: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params; // user to update

@@ -12,10 +12,27 @@ const { branchController } = require("../../../controller/index.js");
 
 // post / create new branch
 //* API: localhost:3000/api/branch
+// dummy data
+// {
+//   logo = "library_logo.png",
+//   name = "Central Library",
+//   description = "Main branch near city center",
+//   address = "MG Road, Nagpur",
+//   city = "Nagpur",
+//   state = "Maharashtra",
+//   country = "India",
+//   postalCode = "443221",
+//   contactNumber = "9876543210",
+//   email = "central@library.com",
+//   status = "active",
+//   branchType = "physical",
+//   managementMode = "digital"
+
+// }
 branchRouter.post(
   "/",
   verifyToken,
-  authorizeRoles("admin", "superadmin", "librarian", "assistant"),
+  authorizeRoles("admin", "superadmin", "librarian"),
   uploadSingle,
   branchController.createBranch
 );
@@ -36,13 +53,39 @@ branchRouter.get(
   branchController.getAllBranches
 );
 
+//API : localhost:3000/api/branch/update/4
 // update branch
+// dummy data
+// {
+//   logo = "library_logo.png",
+//   name = "Central Library",
+//   description = "Main branch near city center",
+//   address = "MG Road, Nagpur",
+//   city = "Nagpur",
+//   state = "Maharashtra",
+//   country = "India",
+//   postalCode = "443221",
+//   contactNumber = "9876543210",
+//   email = "central@library.com",
+//   status = "active",
+//   branchType = "physical",
+//   managementMode = "digital"
+
+// }
 branchRouter.put(
-  "/branche/:id",
+  "/update/:id",
   verifyToken,
   authorizeRoles("admin", "superadmin", "librarian", "assistant"),
   uploadSingle,
   branchController.updateLibraryBranch
+);
+
+//API : localhost:3000/api/branch/1
+branchRouter.get(
+  "/:id",
+  verifyToken,
+  authorizeRoles("admin", "superadmin", "librarian", "assistant"),
+  branchController.getLibraryBranchById
 );
 
 // delete branch

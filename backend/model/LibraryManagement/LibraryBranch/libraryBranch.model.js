@@ -21,46 +21,52 @@ const LibraryBranch = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    // short description of library
     description: {
       type: DataTypes.TEXT, // Short summary for UI display
       allowNull: true,
     },
+    // library address
     address: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-
+    // city of library branch
     city: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-
+    // location state of library
     state: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-
+    // country of library situated
     country: {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    // postal code 
     postalCode: {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    // library contact number
     contactNumber: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-
+    // library email
     email: {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    // library working days
     openingHours: {
       type: DataTypes.JSON,
       allowNull: true, // flexible for storing schedules
     },
+    // status of library
     status: {
       type: DataTypes.ENUM("active", "inactive", "archived"),
       defaultValue: "active",
@@ -76,11 +82,12 @@ const LibraryBranch = sequelize.define(
       type: DataTypes.ENUM("manual", "digital", "hybrid"),
       defaultValue: "digital", // because you're using an app to manage it
     },
+    // library images
     logoUrl: {
       type: DataTypes.STRING, // Branch logo or image
       allowNull: true,
     },
-
+    // who created the library
     createdBy: {
       type: DataTypes.INTEGER,
       references: { model: "users", key: "id" }, // FK → User (Admin/SuperAdmin)
@@ -88,6 +95,7 @@ const LibraryBranch = sequelize.define(
       onUpdate: "CASCADE",
       allowNull: true,
     },
+    // who updated the library
     updatedBy: {
       type: DataTypes.INTEGER,
       references: { model: "users", key: "id" },
@@ -103,7 +111,7 @@ const LibraryBranch = sequelize.define(
 // Associations
 LibraryBranch.associate = (models) => {
 
-  // library has many librarian uer
+  // library has many librarian user
   LibraryBranch.belongsTo(models.User, {
     foreignKey: "createdBy",
   });

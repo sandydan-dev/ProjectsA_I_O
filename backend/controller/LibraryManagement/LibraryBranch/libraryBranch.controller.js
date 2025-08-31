@@ -17,12 +17,12 @@ const createBranch = async (req, res) => {
       managementMode,
     } = req.body;
 
-    const userId = req.user; // from auth middleware
+    const user = req.user; // from auth middleware
     // const createdBy = req.user?.name;
     const logoUrl = req.file?.path || null;
 
     // check role only admin/superadmin/librarian have access to create this
-    if (!["admin", "superadmin", "librarian"].includes(userId.role)) {
+    if (!["admin", "superadmin", "librarian"].includes(user.role)) {
       return res.status(403).json({
         status: false,
         message: `Access denined. Only admin, superadmin, librarian can create branch.`,
@@ -37,15 +37,15 @@ const createBranch = async (req, res) => {
       });
     }
     // auto generate branch code (e.g., "BR01", "BR02", etc.)
-    const totalBranches = await LibraryBranchModel.count();
-    console.log("total branches:", totalBranches);
-
-    // branch code
-    const branchCode = `BR${(totalBranches + 1).toString().padStart(2, "0")}`;
-    console.log("branch code: ", branchCode);
+    const lastBranch = await LibraryBranchModel.findOne({
+      order: [["id", "DESC"]],
+    });
+    const nextId = lastBranch ? lastBranch.id + 1 : 1;
+    console.log("next ID:", nextId);
+    const branchCode = `BR${nextId.toString().padStart(2, "0")}`;
+    console.log("branch code:", branchCode);
 
     // opening hours gives default list
-    // ✅ Default opening hours
     const defaultHours = {
       Monday: "09:00–17:00",
       Tuesday: "09:00–17:00",
@@ -72,9 +72,9 @@ const createBranch = async (req, res) => {
       branchType: branchType || "physical",
       managementMode: managementMode || "digital",
       openingHours: defaultHours,
-      logoUrl,
-      createdBy: userId.id,
-      updatedBy: userId.id,
+      logoUrl: req.file?.path || null,
+      createdBy: user.id,
+      updatedBy: user.id,
     });
 
     console.log("New branch created", newBranch);
@@ -186,28 +186,7 @@ const updateLibraryBranch = async (req, res) => {
     }
 
     const branchId = req.params.id;
-
-    const {
-      description,
-      address,
-      city,
-      state,
-      country,
-      postalCode,
-      contactNumber,
-      email,
-      status,
-      branchType,
-      managementMode,
-      openingHours,
-      name,
-      branchCode,
-      logoUrl,
-    } = req.body;
-
-    const updatedBy = req.user?.id;
-
-    const branch = await LibraryBranch.findByPk(branchId);
+    const branch = await LibraryBranchModel.findByPk(branchId);
 
     if (!branch) {
       return res
@@ -215,24 +194,22 @@ const updateLibraryBranch = async (req, res) => {
         .json({ status: false, message: "Branch not found" });
     }
 
-    await branch.update({
-      description,
-      address,
-      city,
-      state,
-      country,
-      postalCode,
-      contactNumber,
-      email,
-      status,
-      branchType,
-      managementMode,
-      openingHours,
-      name,
-      branchCode,
+    // handle file is exist
+    let logoUrl = branch.logoUrl;
+    if (req.file) {
+      logoUrl = `/uploads/${req.file.filename}`;
+    }
+
+    // ✅ only update provided fields
+    const updateData = {
+      ...req.body,
       logoUrl,
-      updatedBy,
-    });
+      updatedBy: req.user?.id,
+    };
+
+    await branch.update(updateData);
+
+    console.log("branch updated:", branch);
 
     return res.status(200).json({
       status: true,
@@ -244,6 +221,34 @@ const updateLibraryBranch = async (req, res) => {
     return res.status(500).json({
       status: false,
       message: "Internal server error, while updating",
+      error: error.message,
+    });
+  }
+};
+
+const getLibraryBranchById = async (req, res) => {
+  try {
+    const branchId = req.params.id; // get branch id
+
+    const branch = await LibraryBranchModel.findByPk(branchId);
+
+    if (!branch) {
+      return res.status(404).json({
+        status: false,
+        message: "Library branch not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Branch fetched successfully",
+      data: branch,
+    });
+  } catch (error) {
+    console.error("Error fetching branch:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error, while fetching branch",
       error: error.message,
     });
   }
@@ -292,5 +297,6 @@ module.exports = {
   createBranch,
   getAllBranches,
   updateLibraryBranch,
-  deleteLibraryBranch
+  getLibraryBranchById,
+  deleteLibraryBranch,
 };

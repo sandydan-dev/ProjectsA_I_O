@@ -5,6 +5,7 @@ const Shelf = sequelize.define(
   "Shelf",
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    // gives branch id unque id for every shelfs, remove duplicates
     branchId: {
       type: DataTypes.INTEGER,
       references: { model: "library_branches", key: "id" },
@@ -12,24 +13,49 @@ const Shelf = sequelize.define(
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     },
-    floor: {
+    // library floor number
+    floor: { type: DataTypes.STRING, allowNull: true },
+    // section of the shelf
+    section: { type: DataTypes.STRING, allowNull: true },
+    // section row
+    row: { type: DataTypes.STRING, allowNull: true },
+    // unque identity for shelf lable
+    shelfLabel: { type: DataTypes.STRING, allowNull: true },
+
+    // if shelf empty or not
+    status: {
+      type: DataTypes.ENUM("Empty", "Occupied", "Full"),
+      defaultValue: "Empty",
+    },
+    // section books quantity
+    capacity: {
+      type: DataTypes.INTEGER,
+      defaultValue: 50,
+    },
+    // current number of books stored
+    currentCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    // category of books/ already have category BookCategoryModel
+    // category (link with Category model instead of plain string)
+    categoryId: {
+      type: DataTypes.INTEGER,
+      references: { model: "categories", key: "id" },
+      allowNull: true,
+      onDelete: "SET NULL",
+      onUpdate: "CASCADE",
+    },
+    // barcode/unique code /qrcode which have all info about section
+    locationCode: {
       type: DataTypes.STRING,
+      unique: true,
       allowNull: true,
     },
-
-    section: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-
-    row: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-
-    shelfLabel: {
-      type: DataTypes.STRING,
-      allowNull: true,
+    // is working or not
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
   },
   {
@@ -42,16 +68,27 @@ const Shelf = sequelize.define(
 
 Shelf.associate = (models) => {
   // Shelf belongs to a LibraryBranch
-  Shelf.belongsTo(models.LibraryBranch, {
+  Shelf.belongsTo(models.LibraryBranchModel, {
     foreignKey: "branchId",
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
   });
 
-  models.LibraryBranch.hasMany(models.Shelf, { foreignKey: "branchId" });
+  models.LibraryBranchModel.hasMany(models.ShelfModel, {
+    foreignKey: "branchId",
+  });
 
+  // Shelf belongs to Category
+  Shelf.belongsTo(models.CategoryModel, {
+    foreignKey: "categoryId",
+    onDelete: "SET NULL",
+    onUpdate: "CASCADE",
+  });
+  models.CategoryModel.hasMany(models.ShelfModel, {
+    foreignKey: "categoryId",
+  });
   // shelf has many book inventory
-  Shelf.hasMany(models.BookInventory, {
+  Shelf.hasMany(models.BookInventoryModel, {
     foreignKey: "shelfId",
     onDelete: "SET NULL",
     onUpdate: "CASCADE",

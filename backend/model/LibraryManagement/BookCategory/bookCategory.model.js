@@ -9,7 +9,7 @@ const Category = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
-     name: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
@@ -31,8 +31,14 @@ const Category = sequelize.define(
 
 // Associations
 Category.associate = (models) => {
-    // category has many books
-  Category.hasMany(models.Book, {
+  // category has many books
+  Category.hasMany(models.BookModel, {
+    foreignKey: "categoryId",
+    onDelete: "SET NULL",
+    onUpdate: "CASCADE",
+  });
+  // Category has many Shelves (optional: if shelf is categorized)
+  Category.hasMany(models.ShelfModel, {
     foreignKey: "categoryId",
     onDelete: "SET NULL",
     onUpdate: "CASCADE",
